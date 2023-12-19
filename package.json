@@ -1,13 +1,13 @@
 {
   "name": "radix-colors-tailwind",
-  "version": "0.0.1",
+  "version": "0.1.0",
   "main": "dist/index.ts",
   "type": "module",
   "files": [
     "dist"
   ],
   "scripts": {
-    "prod": "bun generator/index.ts",
+    "prod": "rm -R dist && bun build src/index.ts --target bun --outfile ./dist/index.js && bun generator/index.ts",
     "lint": "eslint generator/*"
   },
   "devDependencies": {
@@ -18,8 +18,5 @@
     "eslint": "^8.32.0",
     "bun-types": "latest",
     "typescript": "^5.0.0"
-  },
-  "peerDependencies": {
-    "tailwindcss": ">=3.0.0 || insiders"
   }
 }
