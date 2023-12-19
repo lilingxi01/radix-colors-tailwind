@@ -1,0 +1,22 @@
+{
+  "name": "radix-colors-tailwind",
+  "version": "0.0.1",
+  "main": "generator/index.ts",
+  "type": "module",
+  "scripts": {
+    "prod": "bun generator/index.ts",
+    "lint": "eslint generator/*"
+  },
+  "devDependencies": {
+    "@taci-tech/eslint-config": "^0.0.3",
+    "@radix-ui/colors": "^3.0.0",
+    "@typescript-eslint/eslint-plugin": "^5.48.1",
+    "@typescript-eslint/parser": "^5.48.1",
+    "eslint": "^8.32.0",
+    "bun-types": "latest",
+    "typescript": "^5.0.0"
+  },
+  "peerDependencies": {
+    "tailwindcss": ">=3.0.0 || insiders"
+  }
+}

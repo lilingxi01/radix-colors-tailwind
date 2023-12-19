@@ -1,0 +1,15 @@
+{
+    "extends": ["eslint:recommended", "plugin:@typescript-eslint/recommended", "@taci-tech"],
+    "parser": "@typescript-eslint/parser",
+    "plugins": ["@typescript-eslint"],
+    "rules": {
+        "react-hooks/exhaustive-deps": "off",
+        "operator-linebreak": ["error", "before"],
+        "max-len": "off",
+        "quote-props": "off",
+        // For TypeScript lint:
+        "no-unused-vars": "off",
+        "react/display-name": "off",
+        "valid-jsdoc": "off"
+    }
+}
