@@ -1,5 +1,5 @@
 // eslint-disable-next-line @typescript-eslint/no-var-requires
-const packageJson = require('../package.json');
+const packageJson = require('../../package.json');
 
 export const headerComment = `/**
  Radix Colors for Tailwind CSS

@@ -1,14 +1,19 @@
 {
   "name": "radix-colors-tailwind",
-  "version": "0.1.0",
+  "version": "1.0.0",
   "main": "dist/index.ts",
-  "type": "module",
   "files": [
-    "dist"
+    "dist/**/*",
+    "!**/*.tsbuildinfo",
+    "LICENSE",
+    "README.md"
   ],
   "scripts": {
-    "prod": "rm -R dist && bun build src/index.ts --target bun --outfile ./dist/index.js && bun generator/index.ts",
-    "lint": "eslint generator/*"
+    "prod": "bun clean && bun generate && bun prod:tsc",
+    "prod:tsc": "tsc --project tsconfig.prod.json",
+    "generate": "bun src/scripts/generator.ts",
+    "lint": "eslint src/scripts/*",
+    "clean": "rm -f -R tsconfig.tsbuildinfo dist"
   },
   "devDependencies": {
     "@taci-tech/eslint-config": "^0.0.3",
@@ -18,5 +23,13 @@
     "eslint": "^8.32.0",
     "bun-types": "latest",
     "typescript": "^5.0.0"
+  },
+  "sideEffects": false,
+  "publishConfig": {
+    "access": "public"
+  },
+  "license": "MIT",
+  "exports": {
+    ".": "./dist"
   }
 }

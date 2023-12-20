@@ -1,6 +1,6 @@
 import fs from 'fs';
 import path from 'path';
-import { headerComment } from './header-comment.ts';
+import { headerComment } from './header-comment';
 
 const outputDir = 'dist';
 

@@ -3,9 +3,13 @@
 > [!WARNING]  
 > This project is still in early development. It is not yet ready for production use.
 
-Radix Colors is a great color palette for software design and development. I love its simplicity in defining one color palette for both light and dark mode. I really enjoy the time when I don't have to specify `dark:` colors anymore. The original `@radix-ui/colors` library is fully usable with Tailwind CSS (e.g. `bg-mauve-2`), but it is incompatible with Tailwind CSS alpha value injection (e.g. `bg-mauve-4/50`) because its library is originally implemented and built with Hex color format. So at the same time of enjoying the simplicity of Radix Colors, I have to give up the ability to use Tailwind CSS alpha values for getting a bunch of modified semi-transparent colors.
+Radix Colors is a great color palette for software design and development. I love its simplicity in defining one color palette for both light and dark mode. I really enjoy the time when I don't have to specify `dark:` colors anymore. The original `@radix-ui/colors` library is fully usable with Tailwind CSS (e.g. `bg-mauve-2`), but it is incompatible with Tailwind CSS alpha value injection (e.g. `bg-mauve-4/50`) because its library is originally implemented and built with Hex color format. So at the same time of enjoying the simplicity of Radix Colors, I have to give up the ability to use Tailwind CSS alpha values for getting a bunch of modified semi-transparent colors. This library is intended to provide a simple way to integrate all benefits of Radix Colors in Tailwind CSS, including alpha values, P3 display, and composing ability.
 
-This library is intended to provide a simple way to integrate all benefits of Radix Colors in Tailwind CSS, including alpha values, P3 display, and composing ability. It generally parses the original library and generates a plug-able Tailwind CSS plugin.
+## Implementation Progress
+
+- [x] Alpha value injection (e.g. `bg-mauve-4/50`)
+- [x] Composing ability (light and dark mode in one declaration)
+- [ ] P3 display support (there are some issues with Tailwind flexibilities when we want to keep alpha value injection)
 
 ## Why Radix Colors when Tailwind CSS already has a color palette?
 
@@ -26,7 +30,85 @@ The CSS files in the [original Radix Colors library](https://github.com/radix-ui
 
 ## Usage
 
-TBA.
+### Install
+
+```sh
+npm install radix-colors-tailwind
+# Or with Yarn
+yarn add radix-colors-tailwind
+# Or with PNPM
+pnpm add radix-colors-tailwind
+# Or with Bun
+bun add radix-colors-tailwind
+```
+
+### Import in CSS
+
+```css
+/* Add the colors you need */
+@import "radix-colors-tailwind/dist/mauve.css";
+@import "radix-colors-tailwind/dist/mauve-alpha.css";
+@import "radix-colors-tailwind/dist/mauve-dark.css";
+@import "radix-colors-tailwind/dist/mauve-dark-alpha.css";
+
+@import "radix-colors-tailwind/dist/red.css";
+@import "radix-colors-tailwind/dist/green.css";
+@import "radix-colors-tailwind/dist/blue.css";
+@import "radix-colors-tailwind/dist/orange.css";
+@import "radix-colors-tailwind/dist/gold.css";
+
+@import "radix-colors-tailwind/dist/red-dark.css";
+@import "radix-colors-tailwind/dist/green-dark.css";
+@import "radix-colors-tailwind/dist/blue-dark.css";
+@import "radix-colors-tailwind/dist/orange-dark.css";
+@import "radix-colors-tailwind/dist/gold-dark.css";
+```
+
+### Import in Tailwind CSS Config
+
+```js
+const { transformOneRadixColor, transformRadixColors, transformRadixColorsWithAlpha } = require('radix-colors-tailwind');
+
+/** @type {import('tailwindcss').Config} */
+module.exports = {
+  content: [
+    './app/**/*.{js,ts,jsx,tsx}',
+    './components/**/*.{js,ts,jsx,tsx}',
+    './lib/**/*.{js,ts,jsx,tsx}',
+    '!./node_modules',
+  ],
+  darkMode: 'class', // You need this to enable dark mode more conveniently.
+  future: {
+    hoverOnlyWhenSupported: true,
+  },
+  theme: {
+    colors: false,
+    extend: {
+      // ...
+      colors: {
+        clear: 'transparent',
+        brand: {
+          ...transformRadixColorsWithAlpha('blue'),
+          DEFAULT: transformOneRadixColor('blue', 10),
+          'accent': transformOneRadixColor('blue', 11),
+        },
+        mauve: transformRadixColorsWithAlpha('mauve'),
+        red: transformRadixColors('red'),
+        green: transformRadixColors('green'),
+        blue: transformRadixColors('blue'),
+        gold: transformRadixColors('gold'),
+        orange: transformRadixColors('orange'),
+        std: {
+          border: transformOneRadixColor('mauve', 3),
+        },
+        // ...
+      },
+      // ...
+    },
+  },
+  // ...
+};
+```
 
 ## Reference
 
