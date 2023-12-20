@@ -1,35 +1,34 @@
 {
   "name": "radix-colors-tailwind",
-  "version": "1.0.1",
-  "main": "dist/index.ts",
+  "version": "1.0.5",
+  "main": "dist/index.js",
+  "type": "module",
   "files": [
     "dist/**/*",
     "!**/*.tsbuildinfo",
     "LICENSE",
     "README.md"
   ],
+  "repository": "https://github.com/lilingxi01/radix-colors-tailwind",
   "scripts": {
-    "prod": "bun clean && bun generate && bun prod:tsc",
-    "prod:tsc": "tsc --project tsconfig.prod.json",
-    "generate": "bun src/scripts/generator.ts",
-    "lint": "eslint src/scripts/*",
+    "prod": "bun clean && bun prod:tsc && bun generate",
+    "prod:tsc": "tsup src",
+    "generate": "bun scripts/generator.ts",
+    "lint": "eslint scripts/*",
     "clean": "rm -f -R tsconfig.tsbuildinfo dist"
   },
   "devDependencies": {
-    "@taci-tech/eslint-config": "^0.0.3",
     "@radix-ui/colors": "^3.0.0",
+    "@taci-tech/eslint-config": "^0.0.3",
     "@typescript-eslint/eslint-plugin": "^5.48.1",
     "@typescript-eslint/parser": "^5.48.1",
-    "eslint": "^8.32.0",
     "bun-types": "latest",
+    "eslint": "^8.32.0",
+    "tsup": "^8.0.1",
     "typescript": "^5.0.0"
   },
-  "sideEffects": false,
   "publishConfig": {
     "access": "public"
   },
-  "license": "MIT",
-  "exports": {
-    ".": "./dist"
-  }
+  "license": "MIT"
 }

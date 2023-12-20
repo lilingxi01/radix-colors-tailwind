@@ -8,12 +8,11 @@
     "allowImportingTsExtensions": false,
     "composite": true,
     "strict": true,
+    "noEmit": true,
     "declaration": true,
     "declarationDir": "dist",
     "downlevelIteration": true,
-    "incremental": true,
     "skipLibCheck": true,
-    "rootDir": "src",
     "outDir": "dist",
     "allowSyntheticDefaultImports": true,
     "forceConsistentCasingInFileNames": true,
@@ -21,6 +20,5 @@
     "types": [
       "bun-types" // add Bun global
     ]
-  },
-  "include": ["src/**/*"]
+  }
 }

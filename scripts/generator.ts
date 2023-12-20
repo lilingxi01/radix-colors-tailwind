@@ -112,7 +112,7 @@ async function main() {
     }
 
     const newFilePath = path.join(outputDirPath, currentFilename);
-    await Bun.write(newFilePath, headerComment + '\n\n' + newLines.join('\n'));
+    await Bun.write(newFilePath, headerComment + '\n\n' + newLines.join('\n') + '\n');
   }
 }
 
