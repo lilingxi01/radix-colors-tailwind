@@ -46,6 +46,11 @@ bun add radix-colors-tailwind
 
 ```css
 /* Add the colors you need */
+@import "radix-colors-tailwind/dist/blue.css";
+@import "radix-colors-tailwind/dist/blue-alpha.css";
+@import "radix-colors-tailwind/dist/blue-dark.css";
+@import "radix-colors-tailwind/dist/blue-dark-alpha.css";
+
 @import "radix-colors-tailwind/dist/mauve.css";
 @import "radix-colors-tailwind/dist/mauve-alpha.css";
 @import "radix-colors-tailwind/dist/mauve-dark.css";
@@ -53,13 +58,11 @@ bun add radix-colors-tailwind
 
 @import "radix-colors-tailwind/dist/red.css";
 @import "radix-colors-tailwind/dist/green.css";
-@import "radix-colors-tailwind/dist/blue.css";
 @import "radix-colors-tailwind/dist/orange.css";
 @import "radix-colors-tailwind/dist/gold.css";
 
 @import "radix-colors-tailwind/dist/red-dark.css";
 @import "radix-colors-tailwind/dist/green-dark.css";
-@import "radix-colors-tailwind/dist/blue-dark.css";
 @import "radix-colors-tailwind/dist/orange-dark.css";
 @import "radix-colors-tailwind/dist/gold-dark.css";
 ```
