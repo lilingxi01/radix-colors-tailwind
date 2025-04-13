@@ -1,4 +1,4 @@
-name: Eslint Check
+name: Format Check
 
 on:
   push:
@@ -9,7 +9,7 @@ on:
   workflow_dispatch:
 
 jobs:
-  eslint:
+  format:
     runs-on: ubuntu-latest
 
     steps:
@@ -20,4 +20,4 @@ jobs:
       - name: Install Dependencies
         run: bun install --frozen-lockfile
       - name: Lint Check
-        run: bun lint
+        run: bun run check-format
