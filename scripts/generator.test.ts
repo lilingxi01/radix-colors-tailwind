@@ -38,6 +38,7 @@ beforeAll(async () => {
 });
 
 describe("Generated CSS Files", () => {
+  // Helper function to read and check file content
   const checkFileContent = async (fileName: string, expectations: RegExp[]) => {
     const filePath = path.join(outputDir, fileName);
     let content = "";
@@ -57,26 +58,22 @@ describe("Generated CSS Files", () => {
   // Reusable function for checking alpha-only files (black/white)
   const checkAlphaOnlyFile = async (baseName: string, colorStem: string) => {
     const fileName = `${baseName}.css`;
+    const exampleVarBase = `--radix-rgb-${colorStem}-a9`;
+    const exampleVarInter = `--radix-intermediate-${colorStem}-a9`;
+    const exampleVarTheme = `--color-${colorStem}-a9`;
+
     const content = await checkFileContent(fileName, [
-      // Check for the generated light mode selector block (:root only)
-      /:root\s*\{/s,
-
-      // --- EXTREMELY Simplified Checks ---
-      // Does the theme block declaration exist anywhere?
-      /@theme inline/,
-
-      // Does the specific variable definition exist anywhere?
-      new RegExp(`--radix-rgb-${colorStem}-a9:`),
-
-      // Does the specific theme mapping exist anywhere?
-      new RegExp(`--color-${colorStem}-a9.*var\(.*--radix-rgb-${colorStem}-a9.*\)`), // Very loose check
+      /^:root\s*\{/m,
+      new RegExp(`\{[^}]*${exampleVarBase}:`),
     ]);
 
     // Check that multi-selector light block IS NOT present
     expect(content).not.toMatch(/:root,\s*\.light,\s*\.light-theme\s*\{/s);
-    // Check that dark mode structures are NOT present
+    // Check that dark mode structures ARE NOT present (for alpha files)
     expect(content).not.toMatch(/\.dark,\s*\.dark-theme\s*\{/s);
-    expect(content).not.toMatch(/@media \(prefers-color-scheme: dark\)/s);
+    // Check P3 dark mode structures ARE NOT present (for alpha files)
+    expect(content).not.toMatch(/@supports.*?\.dark,\s*\.dark-theme\s*\{/s);
+    expect(content).not.toMatch(/@supports.*?@media \(prefers-color-scheme: dark\)/s);
   };
 
   test("red.css should contain correct light/dark structures and theme", async () => {
@@ -91,25 +88,39 @@ describe("Generated CSS Files", () => {
       /@theme inline\s*\{/s,
 
       // --- Specific Variable Checks ---
-      // Light Solid Var (--radix-rgb-red-9 defined in :root,.light,.light-theme)
-      /(?:\:root|,\.light|,\.light-theme)\s*\{[^}]*--radix-rgb-red-9:/s,
-      // Light Alpha Var (--radix-rgb-red-a9 defined in :root,.light,.light-theme)
-      /(?:\:root|,\.light|,\.light-theme)\s*\{[^}]*--radix-rgb-red-a9:/s,
+      // Base OKLCH vars
+      /(?:\:root|,.light|,.light-theme)\s*\{[^}]*--radix-rgb-red-9:/s, // Light Solid
+      /(?:\:root|,.light|,.light-theme)\s*\{[^}]*--radix-rgb-red-a9:/s, // Light Alpha
+      /\.dark(?:,|\s*\{)[\s\S]*?--radix-rgb-red-9:/s, // Dark Solid (class)
+      /\.dark(?:,|\s*\{)[\s\S]*?--radix-rgb-red-a9:/s, // Dark Alpha (class)
+      /@media[^{]*\{\s*:root\s*\{[^}]*--radix-rgb-red-9:/s, // Dark Solid (media)
+      /@media[^{]*\{\s*:root\s*\{[^}]*--radix-rgb-red-a9:/s, // Dark Alpha (media)
 
-      // Dark Solid Var (--radix-rgb-red-9 defined in .dark,.dark-theme)
-      /\.dark(?:,|\s*\{)[\s\S]*?--radix-rgb-red-9:/s,
-      // Dark Alpha Var (--radix-rgb-red-a9 defined in .dark,.dark-theme)
-      /\.dark(?:,|\s*\{)[\s\S]*?--radix-rgb-red-a9:/s,
-
-      // Dark Solid Var (--radix-rgb-red-9 defined in @media > :root)
-      /@media[^{]*\{\s*:root\s*\{[^}]*--radix-rgb-red-9:/s,
-      // Dark Alpha Var (--radix-rgb-red-a9 defined in @media > :root)
-      /@media[^{]*\{\s*:root\s*\{[^}]*--radix-rgb-red-a9:/s,
+      // Intermediate oklch(var()) vars (global :root)
+      /^:root\s*\{[^}]*--radix-intermediate-red-9:\s*oklch\(var\(\s*--radix-rgb-red-9\s*\)\);/ms,
+      /^:root\s*\{[^}]*--radix-intermediate-red-a9:\s*oklch\(var\(\s*--radix-rgb-red-a9\s*\)\);/ms,
 
       // Theme Mapping Solid (--color-red-9 defined in @theme)
-      /@theme inline\s*\{[^}]*--color-red-9: oklch\(var\(--radix-rgb-red-9\)\);/s,
+      /@theme inline\s*\{[^}]*--color-red-9:\s*var\(\s*--radix-intermediate-red-9\s*\);/s,
       // Theme Mapping Alpha (--color-red-a9 defined in @theme)
-      /@theme inline\s*\{[^}]*--color-red-a9: oklch\(var\(--radix-rgb-red-a9\)\);/s,
+      /@theme inline\s*\{[^}]*--color-red-a9:\s*var\(\s*--radix-intermediate-red-a9\s*\);/s,
+
+      // --- P3 Checks (Inside @supports / @media) ---
+      // P3 :root block redefining intermediate var (using var())
+      /@supports.*?@media.*?^\s*:root\s*\{[^}]*--radix-intermediate-red-9:\s*var\(\s*--radix-rgb-red-9\s*\);/ms,
+      /@supports.*?@media.*?^\s*:root\s*\{[^}]*--radix-intermediate-red-a9:\s*var\(\s*--radix-rgb-red-a9\s*\);/ms,
+
+      // P3 light selectors redefining base var with P3 color()
+      /@supports.*?@media.*?(?:\:root|,.light|,.light-theme)\s*\{[^}]*--radix-rgb-red-9:\s*color\(display-p3/s,
+      /@supports.*?@media.*?(?:\:root|,.light|,.light-theme)\s*\{[^}]*--radix-rgb-red-a9:\s*color\(display-p3/s,
+
+      // P3 dark selectors redefining base var with P3 color()
+      /@supports.*?@media.*?\.dark,\s*\.dark-theme\s*\{[\s\S]*?--radix-rgb-red-9:\s*color\(display-p3/s,
+      /@supports.*?@media.*?\.dark,\s*\.dark-theme\s*\{[\s\S]*?--radix-rgb-red-a9:\s*color\(display-p3/s,
+
+      // P3 dark media query redefining base var with P3 color()
+      /@supports.*?@media.*?@media \(prefers-color-scheme: dark\)\s*\{\s*:root\s*\{[^}]*--radix-rgb-red-9:\s*color\(display-p3/s,
+      /@supports.*?@media.*?@media \(prefers-color-scheme: dark\)\s*\{\s*:root\s*\{[^}]*--radix-rgb-red-a9:\s*color\(display-p3/s,
     ]);
   });
 

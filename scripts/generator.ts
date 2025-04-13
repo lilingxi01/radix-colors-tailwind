@@ -19,12 +19,16 @@ const hslaRegex = /^--(\w+)-(a\d+):\s*hsla\(([\d.]+),\s*([\d.]+)%,\s*([\d.]+)%,\
 
 // --- Combined Parser & Generator ---
 
-/** Interface to store parsed light/dark values for a single Radix variable (e.g., --blue-1) */
+// Interface to hold sRGB (fallback) and P3 color definitions
+interface ColorDefinition {
+  srgb: string | null;
+  p3: string | null;
+}
+
+/** Interface to store parsed light/dark values for a single Radix variable */
 interface ParsedColorValue {
-  lightValue: string | null; // Raw value string (e.g., #..., hsla(...), rgba(...))
-  darkValue: string | null; // Raw value string
-  // p3LightValue: string | null; // Reserved for future P3 support
-  // p3DarkValue: string | null; // Reserved for future P3 support
+  light: ColorDefinition;
+  dark: ColorDefinition;
 }
 
 /**
@@ -123,18 +127,35 @@ async function parseAndGenerateCombinedCss(
 
             // Initialize if first time seeing this variable
             if (!combinedParsed[variableName]) {
-              combinedParsed[variableName] = { lightValue: null, darkValue: null };
+              combinedParsed[variableName] = {
+                light: { srgb: null, p3: null },
+                dark: { srgb: null, p3: null },
+              };
             }
 
             // Assign value to the correct slot (light/dark), only if not already assigned
             if (currentSelectorScope === "light") {
-              if (combinedParsed[variableName].lightValue === null) {
-                combinedParsed[variableName].lightValue = value;
+              // Check if it's a P3 value first
+              if (value.startsWith("color(display-p3")) {
+                if (combinedParsed[variableName].light.p3 === null) {
+                  combinedParsed[variableName].light.p3 = value;
+                }
+              } else {
+                // Otherwise, assume sRGB fallback
+                if (combinedParsed[variableName].light.srgb === null) {
+                  combinedParsed[variableName].light.srgb = value;
+                }
               }
             } else {
               // Must be dark scope
-              if (combinedParsed[variableName].darkValue === null) {
-                combinedParsed[variableName].darkValue = value;
+              if (value.startsWith("color(display-p3")) {
+                if (combinedParsed[variableName].dark.p3 === null) {
+                  combinedParsed[variableName].dark.p3 = value;
+                }
+              } else {
+                if (combinedParsed[variableName].dark.srgb === null) {
+                  combinedParsed[variableName].dark.srgb = value;
+                }
               }
             }
           }
@@ -168,6 +189,11 @@ async function parseAndGenerateCombinedCss(
   const lightRgbLines: string[] = [];
   const darkRgbLines: string[] = [];
   const themeLines: string[] = [];
+  const intermediateLines: string[] = []; // Collect intermediate defs here
+  const p3LightOverrides: string[] = [];
+  const p3DarkOverrides: string[] = [];
+  const p3IntermediateOverrides: string[] = []; // Single list for all intermediate overrides in P3
+
   // Sort variable names for consistent output order
   const varNames = Object.keys(combinedParsed).sort(sortVarNames);
 
@@ -186,83 +212,110 @@ async function parseAndGenerateCombinedCss(
     const outputIndex = index; // Use the parsed index directly
 
     // Define the output variable names
-    const rgbVar = `--radix-rgb-${outputStemName}-${outputIndex}`;
-    const themeVar = `--color-${outputStemName}-${outputIndex}`;
+    const rgbVar = `--radix-rgb-${outputStemName}-${outputIndex}`; // Holds L C H / A or P3 string
+    const intermediateVar = `--radix-intermediate-${outputStemName}-${outputIndex}`; // Intermediate step
+    const themeVar = `--color-${outputStemName}-${outputIndex}`; // Final theme variable
 
-    // Always generate the Tailwind theme mapping line
-    themeLines.push(`  ${themeVar}: oklch(var(${rgbVar}));`);
+    // Always generate the Tailwind theme mapping line (now points to intermediate)
+    themeLines.push(`  ${themeVar}: var(${intermediateVar});`);
 
     // Convert and add the light mode definition if a light value exists
-    if (parsedValue.lightValue) {
+    if (parsedValue.light.srgb) {
       let oklchString: string | null = null;
       let alphaValue: string | null = null; // To store extracted alpha from hex codes
 
       try {
-        if (parsedValue.lightValue.startsWith("#")) {
-          oklchString = hexToOklchString(parsedValue.lightValue); // This only gives L C H
+        if (parsedValue.light.srgb.startsWith("#")) {
+          oklchString = hexToOklchString(parsedValue.light.srgb); // This only gives L C H
           // Check if it was an 8-digit hex to extract alpha separately
-          if (parsedValue.lightValue.length === 9) {
-            const alphaHex = parsedValue.lightValue.slice(7);
+          if (parsedValue.light.srgb.length === 9) {
+            const alphaHex = parsedValue.light.srgb.slice(7);
             const alpha = parseInt(alphaHex, 16);
             if (!isNaN(alpha)) {
               alphaValue = (Math.round((alpha / 255) * 1000) / 1000).toString();
             }
           }
-        } else if (parsedValue.lightValue.startsWith("hsla")) {
-          oklchString = hslaStringToOklchString(parsedValue.lightValue); // Returns "L C H / A" or "L C H"
-        } else if (parsedValue.lightValue.startsWith("rgba")) {
-          oklchString = rgbaStringToOklchString(parsedValue.lightValue); // Returns "L C H / A" or "L C H"
+        } else if (parsedValue.light.srgb.startsWith("hsla")) {
+          oklchString = hslaStringToOklchString(parsedValue.light.srgb); // Returns "L C H / A" or "L C H"
+        } else if (parsedValue.light.srgb.startsWith("rgba")) {
+          oklchString = rgbaStringToOklchString(parsedValue.light.srgb); // Returns "L C H / A" or "L C H"
         }
         // TODO: Handle p3 colors properly (conversion to OKLCH or pass through)
-        // else if (parsedValue.lightValue.startsWith("color(display-p3")) { ... }
+        // else if (parsedValue.light.srgb.startsWith("color(display-p3")) { ... }
       } catch (error) {
         console.error(
-          `Error converting light value for ${variableName}: ${parsedValue.lightValue}`,
+          `Error converting light value for ${variableName}: ${parsedValue.light.srgb}`,
           error,
         );
       }
 
-      // Append the variable definition
+      // Append the variable definition (OKLCH fallback)
       if (oklchString) {
         // If alpha was separately extracted (only for hex), append it.
         // Otherwise, oklchString already contains alpha if needed.
         const finalValue = alphaValue ? `${oklchString} / ${alphaValue}` : oklchString;
         lightRgbLines.push(`  ${rgbVar}: ${finalValue};`);
+        // Collect intermediate variable definition (only once per var)
+        if (!intermediateLines.some(line => line.startsWith(`  ${intermediateVar}:`))) {
+          intermediateLines.push(`  ${intermediateVar}: oklch(var(${rgbVar}));`);
+        }
+      }
+
+      // Store P3 override if available
+      if (parsedValue.light.p3) {
+        p3LightOverrides.push(`  ${rgbVar}: ${parsedValue.light.p3};`);
+        // Add intermediate override if not already added for this var
+        if (!p3IntermediateOverrides.some(line => line.startsWith(`  ${intermediateVar}:`))) {
+          p3IntermediateOverrides.push(`  ${intermediateVar}: var(${rgbVar});`);
+        }
       }
     }
 
     // Convert and add the dark mode definition if a dark value exists
-    if (parsedValue.darkValue) {
+    if (parsedValue.dark.srgb) {
       let oklchString: string | null = null;
       let alphaValue: string | null = null; // To store extracted alpha from hex codes
 
       try {
-        if (parsedValue.darkValue.startsWith("#")) {
-          oklchString = hexToOklchString(parsedValue.darkValue); // L C H
-          if (parsedValue.darkValue.length === 9) {
-            const alphaHex = parsedValue.darkValue.slice(7);
+        if (parsedValue.dark.srgb.startsWith("#")) {
+          oklchString = hexToOklchString(parsedValue.dark.srgb); // L C H
+          if (parsedValue.dark.srgb.length === 9) {
+            const alphaHex = parsedValue.dark.srgb.slice(7);
             const alpha = parseInt(alphaHex, 16);
             if (!isNaN(alpha)) {
               alphaValue = (Math.round((alpha / 255) * 1000) / 1000).toString();
             }
           }
-        } else if (parsedValue.darkValue.startsWith("hsla")) {
-          oklchString = hslaStringToOklchString(parsedValue.darkValue); // L C H / A
-        } else if (parsedValue.darkValue.startsWith("rgba")) {
-          oklchString = rgbaStringToOklchString(parsedValue.darkValue); // L C H / A
+        } else if (parsedValue.dark.srgb.startsWith("hsla")) {
+          oklchString = hslaStringToOklchString(parsedValue.dark.srgb); // L C H / A
+        } else if (parsedValue.dark.srgb.startsWith("rgba")) {
+          oklchString = rgbaStringToOklchString(parsedValue.dark.srgb); // L C H / A
         }
         // TODO: Handle p3 colors
       } catch (error) {
         console.error(
-          `Error converting dark value for ${variableName}: ${parsedValue.darkValue}`,
+          `Error converting dark value for ${variableName}: ${parsedValue.dark.srgb}`,
           error,
         );
       }
 
-      // Append the variable definition
+      // Append the variable definition (OKLCH fallback)
       if (oklchString) {
         const finalValue = alphaValue ? `${oklchString} / ${alphaValue}` : oklchString;
         darkRgbLines.push(`  ${rgbVar}: ${finalValue};`);
+        // Collect intermediate variable definition (only once per var)
+        if (!intermediateLines.some(line => line.startsWith(`  ${intermediateVar}:`))) {
+          intermediateLines.push(`  ${intermediateVar}: oklch(var(${rgbVar}));`);
+        }
+      }
+
+      // Store P3 override if available
+      if (parsedValue.dark.p3) {
+        p3DarkOverrides.push(`  ${rgbVar}: ${parsedValue.dark.p3};`);
+        // Add intermediate override if not already added for this var
+        if (!p3IntermediateOverrides.some(line => line.startsWith(`  ${intermediateVar}:`))) {
+          p3IntermediateOverrides.push(`  ${intermediateVar}: var(${rgbVar});`);
+        }
       }
     }
   }
@@ -277,6 +330,18 @@ async function parseAndGenerateCombinedCss(
         ? ":root"
         : ":root,\n.light,\n.light-theme";
     cssContent += `${lightSelectors} {\n${lightRgbLines.join("\n")}\n}\n`;
+  }
+
+  // Add intermediate variable definitions (globally, once)
+  if (intermediateLines.length > 0) {
+    // Custom sort based on the variable name extracted from the full line
+    intermediateLines.sort((a, b) => {
+      const nameA = a.match(/^\s*(--\S+):/)?.[1] ?? ""; // Extract '--radix-intermediate-...' name
+      const nameB = b.match(/^\s*(--\S+):/)?.[1] ?? ""; // Extract '--radix-intermediate-...' name
+      // Now use the original sort function on the extracted names
+      return sortVarNames(nameA, nameB);
+    });
+    cssContent += `\n:root {\n${intermediateLines.join("\n")}\n}\n`;
   }
 
   // Add dark mode block (class-based)
@@ -294,6 +359,50 @@ async function parseAndGenerateCombinedCss(
   // Add Tailwind theme mapping block
   if (themeLines.length > 0) {
     cssContent += `\n@theme inline {\n${themeLines.join("\n")}\n}\n`;
+  }
+
+  // --- Add P3 Gamut Support ---
+  // Check if there are *any* P3 overrides to generate the block
+  if (
+    p3IntermediateOverrides.length > 0 ||
+    p3LightOverrides.length > 0 ||
+    p3DarkOverrides.length > 0
+  ) {
+    cssContent += `\n@supports (color: color(display-p3 1 1 1)) {\n`;
+    cssContent += `  @media (color-gamut: p3) {\n`;
+
+    // P3 overrides for intermediate variables (apply once in :root)
+    if (p3IntermediateOverrides.length > 0) {
+      // Custom sort based on the variable name extracted from the full line
+      p3IntermediateOverrides.sort((a, b) => {
+        const nameA = a.match(/^\s*(--\S+):/)?.[1] ?? ""; // Extract '--radix-intermediate-...' name
+        const nameB = b.match(/^\s*(--\S+):/)?.[1] ?? ""; // Extract '--radix-intermediate-...' name
+        // Now use the original sort function on the extracted names
+        return sortVarNames(nameA, nameB);
+      });
+      cssContent += `    :root {\n${p3IntermediateOverrides
+        .map(line => `      ${line.trim()}`) // Indent variable lines
+        .join("\n")}\n    }\n`;
+    }
+
+    // P3 overrides for light mode (--radix-rgb)
+    if (p3LightOverrides.length > 0) {
+      const lightSelectors =
+        baseName === "black-alpha" || baseName === "white-alpha"
+          ? ":root"
+          : ":root,\n    .light,\n    .light-theme";
+      cssContent += `    ${lightSelectors} {\n${p3LightOverrides.map(line => `      ${line.trim()}`).join("\n")}\n    }\n`;
+    }
+
+    // P3 overrides for dark mode (--radix-rgb)
+    if (p3DarkOverrides.length > 0) {
+      cssContent += `    .dark,\n    .dark-theme {\n${p3DarkOverrides.map(line => `      ${line.trim()}`).join("\n")}\n    }\n`;
+      // Nested media query for dark mode P3
+      cssContent += `    @media (prefers-color-scheme: dark) {\n      :root {\n${p3DarkOverrides.map(line => `        ${line.trim()}`).join("\n")}\n      }\n    }\n`;
+    }
+
+    cssContent += `  }\n`; // Close @media (color-gamut: p3)
+    cssContent += `}\n`; // Close @supports
   }
 
   // --- Write File ---
