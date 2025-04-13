@@ -1,7 +1,8 @@
 {
   "name": "radix-colors-tailwind",
-  "version": "1.0.5",
+  "version": "2.0.0",
   "main": "dist/index.js",
+  "style": "dist/radix-colors.css",
   "type": "module",
   "files": [
     "dist/**/*",
@@ -14,16 +15,14 @@
     "prod": "bun clean && bun prod:tsc && bun generate",
     "prod:tsc": "tsup src",
     "generate": "bun scripts/generator.ts",
-    "lint": "eslint scripts/*",
+    "format": "prettier --write .",
+    "check-format": "prettier --check .",
     "clean": "rm -f -R tsconfig.tsbuildinfo dist"
   },
   "devDependencies": {
     "@radix-ui/colors": "^3.0.0",
-    "@taci-tech/eslint-config": "^0.0.3",
-    "@typescript-eslint/eslint-plugin": "^5.48.1",
-    "@typescript-eslint/parser": "^5.48.1",
     "bun-types": "latest",
-    "eslint": "^8.32.0",
+    "prettier": "^3.0.0",
     "tsup": "^8.0.1",
     "typescript": "^5.0.0"
   },

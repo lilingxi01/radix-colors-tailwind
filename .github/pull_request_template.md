@@ -5,7 +5,8 @@
 # Related Issues
 
 <!-- List out the related issues or PRs by just including their number. -->
-* #ISSUE_NUMBER_OR_PR_NUMBER
+
+- #ISSUE_NUMBER_OR_PR_NUMBER
 
 # Contribution Checklist
 

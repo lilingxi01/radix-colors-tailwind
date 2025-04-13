@@ -1,5 +1,7 @@
 # Radix Colors for Tailwind CSS
 
+Now supports Tailwind v4!
+
 > [!WARNING]  
 > This project is still in early development. It is not yet ready for production use.
 
@@ -9,14 +11,15 @@ Radix Colors is a great color palette for software design and development. I lov
 
 - [x] Alpha value injection (e.g. `bg-mauve-4/50`)
 - [x] Composing ability (light and dark mode in one declaration)
+- [x] Tailwind v4 support
 - [ ] P3 display support (there are some issues with Tailwind flexibilities when we want to keep alpha value injection)
 
 ## Why Radix Colors when Tailwind CSS already has a color palette?
 
 The default color palette of Tailwind CSS is great, but it is not efficient to build, and it usually makes your code long and unmaintainable.
 
-* With Tailwind CSS Color Palette: `text-gray-900 bg-gray-100 dark:text-gray-100 dark:bg-gray-900`
-* With Radix Colors: `text-mauve-12 bg-mauve-1`
+- With Tailwind CSS Color Palette: `text-gray-900 bg-gray-100 dark:text-gray-100 dark:bg-gray-900`
+- With Radix Colors: `text-mauve-12 bg-mauve-1`
 
 Above classes are nearly equivalent in both light and dark mode. But the first one is much longer and harder to maintain.
 
@@ -28,7 +31,44 @@ But with Radix Colors, the dark mode colors are uniquely-selected and well-craft
 
 The CSS files in the [original Radix Colors library](https://github.com/radix-ui/colors) is all built with Hex color format. It is usable, but it loses the great ability of Tailwind CSS to inject alpha values. For example, you can't use `bg-mauve-4/50` to get a semi-transparent color from `bg-mauve-4`. This library is intended to solve this problem and further with P3 display support (including P3 display with alpha value injection).
 
-## Usage
+## Usage (Tailwind v4)
+
+### Install
+
+```sh
+npm install radix-colors-tailwind
+# Or with Yarn
+yarn add radix-colors-tailwind
+# Or with PNPM
+pnpm add radix-colors-tailwind
+# Or with Bun
+bun add radix-colors-tailwind
+```
+
+### Import in CSS
+
+In your main CSS file where you include Tailwind's directives (`@tailwindcss`), import the Radix Colors you need. Tailwind v4 automatically picks up colors defined as CSS variables.
+
+```css
+@import "tailwindcss";
+
+/* All colors and their dark mode variants are automatically included */
+/* You typically don't need separate dark imports unless targeting specific dark variables */
+
+@import "radix-colors-tailwind";
+
+/* Optional: Disable default colors to purely use Radix Colors */
+@theme {
+  --color-*: initial;
+}
+
+/* 
+  Now you can use classes like `bg-brand-9`, `text-mauve-12`, `border-red-a6`, etc. 
+  Tailwind v4's JIT compiler will generate the necessary utilities based on these CSS variables.
+*/
+```
+
+## Usage (Tailwind v3 / v4 JavaScript Configuration)
 
 ### Install
 
@@ -70,39 +110,44 @@ bun add radix-colors-tailwind
 ### Import in Tailwind CSS Config
 
 ```js
-const { transformOneRadixColor, transformRadixColors, transformRadixColorsWithAlpha } = require('radix-colors-tailwind');
+const {
+  transformOneRadixColor,
+  transformRadixColors,
+  transformRadixColorsWithAlpha,
+} = require("radix-colors-tailwind");
 
 /** @type {import('tailwindcss').Config} */
 module.exports = {
   content: [
-    './app/**/*.{js,ts,jsx,tsx}',
-    './components/**/*.{js,ts,jsx,tsx}',
-    './lib/**/*.{js,ts,jsx,tsx}',
-    '!./node_modules',
+    "./app/**/*.{js,ts,jsx,tsx}",
+    "./components/**/*.{js,ts,jsx,tsx}",
+    "./lib/**/*.{js,ts,jsx,tsx}",
+    "!./node_modules",
   ],
-  darkMode: 'class', // You need this to enable dark mode more conveniently.
+  darkMode: "class", // You need this to enable dark mode more conveniently.
   future: {
     hoverOnlyWhenSupported: true,
   },
   theme: {
+    // Disable default colors to purely use Radix Colors.
     colors: false,
     extend: {
       // ...
       colors: {
-        clear: 'transparent',
+        clear: "transparent",
         brand: {
-          ...transformRadixColorsWithAlpha('blue'),
-          DEFAULT: transformOneRadixColor('blue', 10),
-          'accent': transformOneRadixColor('blue', 11),
+          ...transformRadixColorsWithAlpha("blue"),
+          DEFAULT: transformOneRadixColor("blue", 10),
+          accent: transformOneRadixColor("blue", 11),
         },
-        mauve: transformRadixColorsWithAlpha('mauve'),
-        red: transformRadixColors('red'),
-        green: transformRadixColors('green'),
-        blue: transformRadixColors('blue'),
-        gold: transformRadixColors('gold'),
-        orange: transformRadixColors('orange'),
+        mauve: transformRadixColorsWithAlpha("mauve"),
+        red: transformRadixColors("red"),
+        green: transformRadixColors("green"),
+        blue: transformRadixColors("blue"),
+        gold: transformRadixColors("gold"),
+        orange: transformRadixColors("orange"),
         std: {
-          border: transformOneRadixColor('mauve', 3),
+          border: transformOneRadixColor("mauve", 3),
         },
         // ...
       },

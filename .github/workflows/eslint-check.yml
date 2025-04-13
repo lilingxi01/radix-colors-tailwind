@@ -3,7 +3,7 @@ name: Eslint Check
 on:
   push:
     branches:
-      - '*'
+      - "*"
 
   # Allows you to run this workflow manually from the Actions tab
   workflow_dispatch:
@@ -21,4 +21,3 @@ jobs:
         run: bun install --frozen-lockfile
       - name: Lint Check
         run: bun lint
-
