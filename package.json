@@ -17,12 +17,16 @@
     "generate": "bun scripts/generator.ts",
     "format": "prettier --write .",
     "check-format": "prettier --check .",
+    "test": "jest",
     "clean": "rm -f -R tsconfig.tsbuildinfo dist"
   },
   "devDependencies": {
     "@radix-ui/colors": "^3.0.0",
+    "@types/jest": "^29.5.14",
     "bun-types": "latest",
+    "jest": "^29.7.0",
     "prettier": "^3.0.0",
+    "ts-jest": "^29.3.2",
     "tsup": "^8.0.1",
     "typescript": "^5.0.0"
   },
