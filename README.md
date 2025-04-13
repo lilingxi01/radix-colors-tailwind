@@ -1,6 +1,6 @@
 # Radix Colors for Tailwind CSS
 
-Now supports Tailwind v4!
+**Now supports Tailwind v4, P3 display, and opacity at the same time!**
 
 > [!NOTE]  
 > This project is now production-ready, and has already been used in many production products! Try it, and you won't go back. ❤️
@@ -12,7 +12,7 @@ Radix Colors is a great color palette for software design and development. I lov
 - [x] Alpha value injection (e.g. `bg-mauve-4/50`)
 - [x] Composing ability (light and dark mode in one declaration)
 - [x] Tailwind v4 support
-- [ ] P3 display support (there are some issues with Tailwind flexibilities when we want to keep alpha value injection)
+- [x] P3 display support + opacity support with P3 display
 
 ## Why Radix Colors when Tailwind CSS already has a color palette?
 
@@ -55,6 +55,11 @@ In your main CSS file where you include Tailwind's directives (`@tailwindcss`), 
 /* All colors and their dark mode variants are automatically included */
 /* You typically don't need separate dark imports unless targeting specific dark variables */
 
+/* This includes the red and blue colors, including their transparent variants and dark color variants */
+@import "radix-colors-tailwind/dist/red.css";
+@import "radix-colors-tailwind/dist/blue.css";
+
+/* Alternatively, you can include all colors by a single line of import */
 @import "radix-colors-tailwind";
 
 /* Optional: Disable default colors to purely use Radix Colors */
@@ -68,18 +73,20 @@ In your main CSS file where you include Tailwind's directives (`@tailwindcss`), 
 */
 ```
 
-## Usage (Tailwind v3 / v4 JavaScript Configuration)
+## Usage (Tailwind v3)
+
+Radix Colors Tailwind v2 doesn't backward compatible with Tailwind v4 due to the difference on CSS structure, thus you have to pin at the version `v1.0.5`. This version is production-ready, and have been verified in many production projects.
 
 ### Install
 
 ```sh
-npm install radix-colors-tailwind
+npm install radix-colors-tailwind@1.0.5
 # Or with Yarn
-yarn add radix-colors-tailwind
+yarn add radix-colors-tailwind@1.0.5
 # Or with PNPM
-pnpm add radix-colors-tailwind
+pnpm add radix-colors-tailwind@1.0.5
 # Or with Bun
-bun add radix-colors-tailwind
+bun add radix-colors-tailwind@1.0.5
 ```
 
 ### Import in CSS
