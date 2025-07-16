@@ -78,12 +78,6 @@ async function parseAndGenerateCombinedCss(
         } else if (trimmedLine.startsWith(".dark,")) {
           currentSelectorScope = "dark";
           if (trimmedLine.includes("{")) braceLevel = 1;
-        } else if (
-          trimmedLine.startsWith("@media") &&
-          trimmedLine.includes("prefers-color-scheme: dark")
-        ) {
-          // Assume @media contains dark overrides
-          currentSelectorScope = "dark";
         }
 
         // Track nesting level within the detected scope
@@ -349,13 +343,6 @@ async function parseAndGenerateCombinedCss(
     cssContent += `\n.dark,\n.dark-theme {\n${darkRgbLines.join("\n")}\n}\n`;
   }
 
-  // Add dark mode block (media query)
-  if (darkRgbLines.length > 0) {
-    cssContent += `\n@media (prefers-color-scheme: dark) {\n  :root {\n${darkRgbLines.join(
-      "\n",
-    )}\n  }\n}\n`;
-  }
-
   // Add Tailwind theme mapping block
   if (themeLines.length > 0) {
     cssContent += `\n@theme inline {\n${themeLines.join("\n")}\n}\n`;
@@ -397,8 +384,6 @@ async function parseAndGenerateCombinedCss(
     // P3 overrides for dark mode (--radix-rgb)
     if (p3DarkOverrides.length > 0) {
       cssContent += `    .dark,\n    .dark-theme {\n${p3DarkOverrides.map(line => `      ${line.trim()}`).join("\n")}\n    }\n`;
-      // Nested media query for dark mode P3
-      cssContent += `    @media (prefers-color-scheme: dark) {\n      :root {\n${p3DarkOverrides.map(line => `        ${line.trim()}`).join("\n")}\n      }\n    }\n`;
     }
 
     cssContent += `  }\n`; // Close @media (color-gamut: p3)
